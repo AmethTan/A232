@@ -1,15 +1,15 @@
 # Create a tuple
-vege = ("apple", "banana", "cherry", "date")
+vege = ("spinach", "", "cherry", "date")
 
 ( "a" , 1 , 2.3 , "b"    )
 
 
 # Access elements by index
-first_fruit = veges[0]
-second_fruit = veges[1]
+first_vege = veges[0]
+second_vege = veges[1]
 
 # Iterate through the tuple
-print("Fruits:")
+print("Veges:")
 for vege in veges:
     print(vege)
 
@@ -27,11 +27,11 @@ all_veges = veges + more_veges
 nested_tuple = ("red", ("green", "blue"))
 
 # Print the results
-print("First fruit:", first_vege)
-print("Second fruit:", second_vege)
+print("First vege:", first_vege)
+print("Second vege:", second_vege)
 print("Does it contain 'cherry'? ", contains_cherry)
-print("Number of fruits:", num_veges)
-print("All fruits:", all_veges)
+print("Number of veges:", num_veges)
+print("All veges:", all_veges)
 print("Nested tuple:", nested_tuple)
 
 # Modified by Tan Yu Xian for learning purpose
