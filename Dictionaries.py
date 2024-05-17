@@ -1,12 +1,12 @@
 # Create a dictionary of student information
 student = {
-    "name": "Alice",
-    "age": int(20),
-    "major": "Computer Science",
+    "name": "Bernard",
+    "age": int(22),
+    "major": "Decision Science",
     "grades": {
-        "math": 95,
-        "english": 88,
-        "history": 92
+        "math": 98,
+        "english": 91,
+        "programming": 95
     }
 }
 
@@ -15,19 +15,22 @@ student_name = student["name"]
 student_age = student["age"]
 
 # Modify dictionary values
-student["age"] = 21
-student["grades"]["math"] = 97
+student["age"] = 24
+student["grades"]["math"] = 100
 
 # Add a new key-value pair
-student["gender"] = "Female"
+student["gender"] = "Male"
 
 # Check if a key exists in the dictionary
 has_major = "major" in student
-has_height = "height" in student
+has_height = "weight" in student
 
 # Get the list of keys and values
 keys = student.keys()
 values = student.values()
+print(keys)
+print(values)
+print()
 
 # Iterate through the dictionary
 print("Student Information:")
@@ -35,12 +38,13 @@ for key, value in student.items():
     print(f"{key}: {value}")
 
 # Remove a key-value pair
-del student["grades"]
+del student["major"]
 
 # Print the updated dictionary
-print("\nStudent Information after removing 'grades':")
+print("\nStudent Information after removing 'major':")
 for key, value in student.items():
     print(f"{key}: {value}")
 
+# Modified for learning purpose by Tan Yu Xian
 # Created by Dr Aamir Adeeb
 # Contact for more info at aamir@uum.edu.my
