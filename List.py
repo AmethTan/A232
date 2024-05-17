@@ -1,40 +1,40 @@
 # Create a list of numbers
-numbers = [1, 2, 3, 4, 5]
+numbers = [5, 4, 3, 2, 1]
 
 # Print the list
-print("Original list:", numbers)
+print("First list:", numbers)
 
 # Access elements by index
-first_element = numbers[0]
-print("The first element is:", first_element)
+last_element = numbers[-1]
+print("The last element is:", last_element)
 
 
 # Slice the list to get a subset
-subset = numbers[2:4]
+subset = numbers[1:3]
 print("Subset of the list:", subset)
 
 # Modify an element in the list
-numbers[1] = 10
+numbers[0] = 10
 print("Modified list:", numbers)
 
 
 
 # Append an element to the end of the list
-numbers.append(6)
-print("List after appending 6:", numbers)
+numbers.append(8)
+print("List after appending 8:", numbers)
 
 # Remove an element by value
-numbers.remove(3)
-print("List after removing 3:", numbers)
+numbers.remove(2)
+print("List after removing 2:", numbers)
 
 
 # Find the index of an element
-index_of_4 = numbers.index(4)
-print("Index of 4:", index_of_4)
+index_of_3 = numbers.index(3)
+print("Index of 3:", index_of_3)
 
 # Check if an element is in the list
-contains_7 = 7 in numbers
-print("Does the list contain 7?", contains_7)
+contains_6 = 6 in numbers
+print("Does the list contain 6?", contains_6)
 
 
 # Sort the list
@@ -47,9 +47,9 @@ print("Reversed list:", numbers)
 
  
 # Create a list of strings
-fruits = ["apple", "banana", "cherry", "date"]
+veges = ["cabbage", "carrot", "spinach", "tomato"]
 
-print(fruits[0])
+print(veges[2])
 
 # Modified by Tan Yu Xian for learning purpose
 # Created by Dr Aamir Adeeb
