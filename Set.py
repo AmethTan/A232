@@ -4,37 +4,38 @@
 #or when you need to perform set operations like union and intersection.
 
 # Create a set
-fruits = {"apple", "banana", "cherry", "date"}
+veges = {"cabbage", "spinach", "tomato", "potato"}
 
 # Add an element to the set
-fruits.add("grape")
+veges.add("carrot")
 
 # Remove an element from the set
-fruits.remove("cherry")
+veges.remove("cabbage")
 
 # Check if an element is in the set
-contains_banana = "banana" in fruits
-contains_orange = "orange" in fruits
+contains_tomato = "tomato" in veges
+contains_aragula = "aragula" in veges
 
 # Iterate through the set
-print("Fruits:")
-for fruit in fruits:
-    print(fruit)
+print("Veges:")
+for vege in veges:
+    print(vege)
 
 # Create another set
-citrus_fruits = {"orange", "lemon", "lime"}
+ground_veges = {"carrot", "turnip", "radish","potato"}
 
 # Perform set operations
-union_fruits_citrus = fruits.union(citrus_fruits)
-intersection_fruits_citrus = fruits.intersection(citrus_fruits)
-difference_fruits_citrus = fruits.difference(citrus_fruits)
+union_veges_ground = veges.union(ground_veges)
+intersection_veges_ground = veges.intersection(ground_veges)
+difference_veges_ground = veges.difference(ground_veges)
 
 # Print the results
-print("Contains 'banana'? ", contains_banana)
-print("Contains 'orange'? ", contains_orange)
-print("Union of fruits and citrus fruits:", union_fruits_citrus)
-print("Intersection of fruits and citrus fruits:", intersection_fruits_citrus)
-print("Difference between fruits and citrus fruits:", difference_fruits_citrus)
+print("Contains 'tomato'? ", contains_tomato)
+print("Contains 'aragula'? ", contains_aragula)
+print("Union of veges and ground veges:", union_veges_ground)
+print("Intersection of veges and ground veges:", intersection_veges_ground)
+print("Difference between veges and ground veges:", difference_veges_ground)
 
+# Modified by Tan Yu Xian for learning purpose
 # Created by Dr Aamir Adeeb
 # Contact for more info at aamir@uum.edu.my
