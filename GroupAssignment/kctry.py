@@ -18,7 +18,13 @@ alt.themes.enable("dark")
 
 #######################
 # Load data
-df_reshaped = pd.read_csv('C:\Python Program\GroupAssignmentSQIT3073\population_district_year.csv')
+URL_DATA = 'https://storage.dosm.gov.my/population/population_state.parquet'
+
+df = pd.read_parquet(URL_DATA)
+if 'date' in df.columns: df['date'] = pd.to_datetime(df['date'])
+
+pd.set_option('display.max_columns', None)
+df.head()
 
 
 #######################
@@ -26,10 +32,10 @@ df_reshaped = pd.read_csv('C:\Python Program\GroupAssignmentSQIT3073\population_
 with st.sidebar:
     st.title('🏂 US Population Dashboard')
     
-    year_list = list(df_reshaped.year.unique())[::-1]
+    year_list = list(df.year.unique())[::-1]
     
     selected_year = st.selectbox('Select a year', year_list)
-    df_selected_year = df_reshaped[df_reshaped.year == selected_year]
+    df_selected_year = df[df.year == selected_year]
     df_selected_year_sorted = df_selected_year.sort_values(by="population", ascending=False)
 
     color_theme_list = ['blues', 'cividis', 'greens', 'inferno', 'magma', 'plasma', 'reds', 'rainbow', 'turbo', 'viridis']
@@ -147,7 +153,7 @@ col = st.columns((1.5, 4.5, 2), gap='medium')
 with col[0]:
     st.markdown('#### Gains/Losses')
 
-    df_population_difference_sorted = calculate_population_difference(df_reshaped, selected_year)
+    df_population_difference_sorted = calculate_population_difference(df, selected_year)
 
     if selected_year > 2020:
         first_state_name = df_population_difference_sorted.state.iloc[0]
@@ -202,7 +208,7 @@ with col[1]:
     choropleth = make_choropleth(df_selected_year, 'state', 'population', selected_color_theme)
     st.plotly_chart(choropleth, use_container_width=True)
     
-    heatmap = make_heatmap(df_reshaped, 'year', 'state', 'population', selected_color_theme)
+    heatmap = make_heatmap(df, 'year', 'state', 'population', selected_color_theme)
     st.altair_chart(heatmap, use_container_width=True)
     
 
