@@ -4,12 +4,16 @@ import streamlit as st
 import pandas as pd
 import altair as alt
 import plotly.express as px
+import json
+import folium
+from streamlit_folium import st_folium
+import math
 
 #######################
 # Page configuration
 st.set_page_config(
     page_title="Malaysia Population Dashboard",
-    page_icon="🏂",
+    page_icon="🏝️",
     layout="wide",
     initial_sidebar_state="expanded")
 
@@ -22,21 +26,31 @@ URL_DATA = 'https://storage.dosm.gov.my/population/population_state.parquet'
 
 df = pd.read_parquet(URL_DATA)
 if 'date' in df.columns: df['date'] = pd.to_datetime(df['date'])
-
-pd.set_option('display.max_columns', None)
+df['year'] = df['date'].dt.year
+df['population'] = df['population'].mul(1000).round(0)
 df.head()
 
+#######################
+# Data modification
+
+df_reshaped = df
+totalPop_df = df[(df['sex'] == 'both') & (df['age'] == 'overall') & (df['ethnicity'] == 'overall')].copy()
+population_by_year_df = totalPop_df.groupby('year')['population'].sum().reset_index()
+population_by_year_df['state'] = 'Overall'
 
 #######################
 # Sidebar
 with st.sidebar:
-    st.title('🏂 US Population Dashboard')
-    
-    year_list = list(df.year.unique())[::-1]
+    st.title('🏝️ Malaysia Population Dashboard')
+
+    df_reshaped = df_reshaped.assign(year=df_reshaped['year'].astype(int))
+    year_list = list(df_reshaped['year'].unique())[::-1]
     
     selected_year = st.selectbox('Select a year', year_list)
-    df_selected_year = df[df.year == selected_year]
+    df_selected_year = df_reshaped[df_reshaped['year'] == selected_year]
     df_selected_year_sorted = df_selected_year.sort_values(by="population", ascending=False)
+    df_selected_year_totalPop = totalPop_df[totalPop_df['year'] == selected_year]
+    df_selected_year_totalPop_sorted = df_selected_year_totalPop.sort_values(by="population", ascending=False)
 
     color_theme_list = ['blues', 'cividis', 'greens', 'inferno', 'magma', 'plasma', 'reds', 'rainbow', 'turbo', 'viridis']
     selected_color_theme = st.selectbox('Select a color theme', color_theme_list)
@@ -63,24 +77,6 @@ def make_heatmap(input_df, input_y, input_x, input_color, input_color_theme):
         ) 
     # height=300
     return heatmap
-
-
-# Choropleth map
-def make_choropleth(input_df, input_id, input_column, input_color_theme):
-    choropleth = px.choropleth(input_df, locations=input_id, color=input_column, locationmode="country names",
-                               color_continuous_scale=input_color_theme,
-                               range_color=(0, max(df_selected_year.population)),
-                               scope = 'asia',
-                               labels={'population':'Population'}
-                              )
-    choropleth.update_layout(
-        template='plotly_dark',
-        plot_bgcolor='rgba(0, 0, 0, 0)',
-        paper_bgcolor='rgba(0, 0, 0, 0)',
-        margin=dict(l=0, r=0, t=0, b=0),
-        height=350
-    )
-    return choropleth
 
 
 # Donut chart
@@ -130,21 +126,18 @@ def make_donut(input_response, input_text, input_color):
 
 # Convert population to text 
 def format_number(num):
-    if num > 1000000:
-        if not num % 1000000:
-            return f'{num // 1000000} M'
-        return f'{round(num / 1000000, 1)} M'
-    return f'{num // 1000} K'
+    return f'{round(num, 0)}'
+
+
+
 
 # Calculation year-over-year population migrations
 def calculate_population_difference(input_df, input_year):
-  selected_year_data = input_df[input_df['year'] == input_year].reset_index()
-  previous_year_data = input_df[input_df['year'] == input_year - 1].reset_index()
-  selected_year_data['population_difference'] = selected_year_data.population.sub(previous_year_data.population, fill_value=0)
-  return pd.concat([selected_year_data.state, selected_year_data.population, selected_year_data.population_difference], axis=1).sort_values(by="population_difference", ascending=False)
-
-
-
+    input_year = int(input_year)
+    selected_year_data = input_df[input_df['year'] == input_year].reset_index()
+    previous_year_data = input_df[input_df['year'] == input_year - 1].reset_index()
+    selected_year_data['population_difference'] = selected_year_data.population.sub(previous_year_data.population, fill_value=0)
+    return pd.concat([selected_year_data.state, selected_year_data.population, selected_year_data.population_difference], axis=1).sort_values(by="population_difference", ascending=False)
 
 #######################
 # Dashboard Main Panel
@@ -153,87 +146,83 @@ col = st.columns((1.5, 4.5, 2), gap='medium')
 with col[0]:
     st.markdown('#### Gains/Losses')
 
-    df_population_difference_sorted = calculate_population_difference(df, selected_year)
+    df_population_difference_sorted = calculate_population_difference(totalPop_df, selected_year)
+    df_country_population_difference_sorted = calculate_population_difference(population_by_year_df, selected_year)
+    selected_year = int(selected_year)
 
     if selected_year > 2020:
-        first_state_name = df_population_difference_sorted.state.iloc[0]
-        first_state_population = format_number(df_population_difference_sorted.population.iloc[0])
-        first_state_delta = format_number(df_population_difference_sorted.population_difference.iloc[0])
+        pop_name = "Overall"
+        pop_population = format_number(df_country_population_difference_sorted.population.values[0])
+        pop_delta = format_number(df_country_population_difference_sorted.population_difference.values[0])
     else:
-        first_state_name = '-'
-        first_state_population = '-'
-        first_state_delta = ''
-    st.metric(label=first_state_name, value=first_state_population, delta=first_state_delta)
+        pop_name = '-'
+        pop_population = '-'
+        pop_delta = ''
+    st.metric(label=pop_name, value=pop_population, delta=pop_delta)
 
     if selected_year > 2020:
-        last_state_name = df_population_difference_sorted.state.iloc[-1]
-        last_state_population = format_number(df_population_difference_sorted.population.iloc[-1])   
-        last_state_delta = format_number(df_population_difference_sorted.population_difference.iloc[-1])   
+        max_state_name = df_population_difference_sorted.state.iloc[df_population_difference_sorted['population_difference'].idxmax()]
+        max_state_population = format_number(df_population_difference_sorted.population.iloc[df_population_difference_sorted['population_difference'].idxmax()])   
+        max_state_delta = format_number(df_population_difference_sorted.population_difference.iloc[df_population_difference_sorted['population_difference'].idxmax()])   
     else:
-        last_state_name = '-'
-        last_state_population = '-'
-        last_state_delta = ''
-    st.metric(label=last_state_name, value=last_state_population, delta=last_state_delta)
+        max_state_name = '-'
+        max_state_population = '-'
+        max_state_delta = ''
+    st.metric(label=max_state_name, value=max_state_population, delta=max_state_delta)
 
     
-    st.markdown('#### States Migration')
+    st.markdown('#### Percentages')
+
+    male_population_sum = df_reshaped[(df_reshaped['sex'] == 'male') & (df_reshaped['year'] == selected_year)]['population'].sum()
+    female_population_sum = df_reshaped[(df_reshaped['sex'] == 'female') & (df_reshaped['year'] == selected_year)]['population'].sum()
+    population_sum = df_reshaped[(df_reshaped['sex'] == 'both') & (df_reshaped['year'] == selected_year)]['population'].sum()
+    male_percentage = male_population_sum / population_sum * 100
+    female_percentage = female_population_sum / population_sum * 100
+    male_percentage = math.ceil(male_percentage)
+    female_percentage = math.ceil(female_percentage)
 
     if selected_year > 2020:
-        # Filter states with population difference > 50000
-        # df_greater_50000 = df_population_difference_sorted[df_population_difference_sorted.population_difference_absolute > 50000]
-        df_greater_50000 = df_population_difference_sorted[df_population_difference_sorted.population_difference > 50000]
-        df_less_50000 = df_population_difference_sorted[df_population_difference_sorted.population_difference < -50000]
-        
-        # % of States with population difference > 50000
-        states_migration_greater = round((len(df_greater_50000)/df_population_difference_sorted.state.nunique())*100)
-        states_migration_less = round((len(df_less_50000)/df_population_difference_sorted.state.nunique())*100)
-        donut_chart_greater = make_donut(states_migration_greater, 'Inbound Migration', 'green')
-        donut_chart_less = make_donut(states_migration_less, 'Outbound Migration', 'red')
-    else:
-        states_migration_greater = 0
-        states_migration_less = 0
-        donut_chart_greater = make_donut(states_migration_greater, 'Inbound Migration', 'green')
-        donut_chart_less = make_donut(states_migration_less, 'Outbound Migration', 'red')
+        donut_chart_greater = make_donut(male_percentage, 'Male', 'blue')
+        donut_chart_less = make_donut(female_percentage, 'Female', 'red')
 
     migrations_col = st.columns((0.2, 1, 0.2))
     with migrations_col[1]:
-        st.write('Inbound')
+        st.write('Overall')
         st.altair_chart(donut_chart_greater)
-        st.write('Outbound')
+        st.write('Highest Increase By State')
         st.altair_chart(donut_chart_less)
 
 with col[1]:
     st.markdown('#### Total Population')
     
-    choropleth = make_choropleth(df_selected_year, 'state', 'population', selected_color_theme)
-    st.plotly_chart(choropleth, use_container_width=True)
-    
-    heatmap = make_heatmap(df, 'year', 'state', 'population', selected_color_theme)
+    heatmap = make_heatmap(df_reshaped, 'year', 'state', 'population', selected_color_theme)
     st.altair_chart(heatmap, use_container_width=True)
     
 
 with col[2]:
     st.markdown('#### Top States')
 
-    st.dataframe(df_selected_year_sorted,
-                 column_order=("states", "population"),
+    st.dataframe(df_selected_year_totalPop_sorted,
+                 column_order=("state", "population"),
                  hide_index=True,
                  width=None,
                  column_config={
-                    "states": st.column_config.TextColumn(
-                        "States",
-                    ),
+                    "state": st.column_config.TextColumn(
+                        "State",
+                     ),
                     "population": st.column_config.ProgressColumn(
                         "Population",
                         format="%f",
                         min_value=0,
-                        max_value=max(df_selected_year_sorted.population),
-                     )}
+                        max_value=max(df_selected_year_totalPop_sorted.population),
+                    )}
                  )
     
     with st.expander('About', expanded=True):
         st.write('''
-            - Data: [U.S. Census Bureau](https://www.census.gov/data/datasets/time-series/demo/popest/2010s-state-total.html).
-            - :orange[**Gains/Losses**]: states with high inbound/ outbound migration for selected year
-            - :orange[**States Migration**]: percentage of states with annual inbound/ outbound migration > 50,000
-            ''')
+            - Data: [Department of Statistics Malaysia](https://storage.dosm.gov.my/population/population_state.parquet).
+            - :orange[**Gains/Losses**]: Overall increase or decrease in population. 
+            - :orange[**Highest Increase By State**: states with highest population increase.
+            ''')     
+    
+    
