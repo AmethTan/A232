@@ -22,10 +22,20 @@ alt.themes.enable("dark")
 
 #######################
 # Load data
-URL_DATA = 'https://storage.dosm.gov.my/population/population_state.parquet'
+URL_DATA1 = 'https://storage.dosm.gov.my/population/population_state.parquet'
 
-df = pd.read_parquet(URL_DATA)
-if 'date' in df.columns: df['date'] = pd.to_datetime(df['date'])
+df_population = pd.read_parquet(URL_DATA1)
+if 'date' in df_population.columns: df_population['date'] = pd.to_datetime(df_population['date'])
+
+URL_DATA2 = 'https://storage.dosm.gov.my/hies/hies_state.parquet'
+
+df_expenditure = pd.read_parquet(URL_DATA2)
+if 'date' in df_expenditure.columns: df_expenditure['date'] = pd.to_datetime(df_expenditure['date'])
+
+df = pd.merge(df_population, df_expenditure, on=['date', 'state'], how='left')
+
+
+
 df['year'] = df['date'].dt.year
 df['population'] = df['population'].mul(1000).round(0)
 df.head()
@@ -34,6 +44,7 @@ df.head()
 # Data modification
 
 df_reshaped = df
+totalExpend_df = df[(df['sex'] == 'both') & (df['age'] == 'overall') & (df['ethnicity'] == 'overall')].copy()
 totalPop_df = df[(df['sex'] == 'both') & (df['age'] == 'overall') & (df['ethnicity'] == 'overall')].copy()
 population_by_year_df = totalPop_df.groupby('year')['population'].sum().reset_index()
 population_by_year_df['state'] = 'Overall'
@@ -51,9 +62,13 @@ with st.sidebar:
     df_selected_year_sorted = df_selected_year.sort_values(by="population", ascending=False)
     df_selected_year_totalPop = totalPop_df[totalPop_df['year'] == selected_year]
     df_selected_year_totalPop_sorted = df_selected_year_totalPop.sort_values(by="population", ascending=False)
+    df_selected_year_totalExpend = totalExpend_df[totalExpend_df['year'] == totalExpend_df['year']]
+    df_selected_year_totalExpend_sorted = df_selected_year_totalExpend.sort_values(by="expenditure_mean", ascending=False)
+    df_selected_year_totalExpend_sorted = df_selected_year_totalExpend_sorted.dropna(subset=['expenditure_mean'])
 
     color_theme_list = ['blues', 'cividis', 'greens', 'inferno', 'magma', 'plasma', 'reds', 'rainbow', 'turbo', 'viridis']
     selected_color_theme = st.selectbox('Select a color theme', color_theme_list)
+
 
 
 #######################
@@ -131,7 +146,7 @@ def format_number(num):
 
 
 
-# Calculation year-over-year population increment or decrement
+# Calculation year-over-year population migrations
 def calculate_population_difference(input_df, input_year):
     input_year = int(input_year)
     selected_year_data = input_df[input_df['year'] == input_year].reset_index()
@@ -222,8 +237,39 @@ with col[2]:
         st.write('''
             - Data: [Department of Statistics Malaysia](https://storage.dosm.gov.my/population/population_state.parquet).
             ''')     
+
+
+st.divider()  
     
+col2 = st.columns((1.5, 4.5, 2))
+
+with col2[1]:
+    st.markdown('#### Total Expenditure')
     
+    heatmap = make_heatmap(df_reshaped, 'year', 'state', 'expenditure_mean', selected_color_theme)
+    st.altair_chart(heatmap, use_container_width=True)
+
+with col2[2]:
+    st.markdown('#### Top Expenditure States')
 
 
-
+    st.dataframe(df_selected_year_totalExpend_sorted,
+                 column_order=("state", "expenditure_mean"),
+                 hide_index=True,
+                 width=None,
+                 column_config={
+                    "state": st.column_config.TextColumn(
+                        "State",
+                     ),
+                    "expenditure_mean": st.column_config.ProgressColumn(
+                        "expenditure_mean",
+                        format="%f",
+                        min_value=0,
+                        max_value=max(df_selected_year_totalExpend_sorted.expenditure_mean),
+                    )}
+                 )
+    
+    with st.expander('About', expanded=True):
+        st.write('''
+            - Data: [Department of Statistics Malaysia](https://storage.dosm.gov.my/hies/hies_state.parquet).
+            ''')     
