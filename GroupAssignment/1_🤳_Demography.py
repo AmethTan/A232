@@ -131,7 +131,7 @@ def format_number(num):
 
 
 
-# Calculation year-over-year population migrations
+# Calculation year-over-year population increment or decrement
 def calculate_population_difference(input_df, input_year):
     input_year = int(input_year)
     selected_year_data = input_df[input_df['year'] == input_year].reset_index()
@@ -187,9 +187,9 @@ with col[0]:
 
     migrations_col = st.columns((0.2, 1, 0.2))
     with migrations_col[1]:
-        st.write('Overall')
+        st.write('Male Population')
         st.altair_chart(donut_chart_greater)
-        st.write('Highest Increase By State')
+        st.write('Female Population')
         st.altair_chart(donut_chart_less)
 
 with col[1]:
@@ -221,8 +221,9 @@ with col[2]:
     with st.expander('About', expanded=True):
         st.write('''
             - Data: [Department of Statistics Malaysia](https://storage.dosm.gov.my/population/population_state.parquet).
-            - :orange[**Gains/Losses**]: Overall increase or decrease in population. 
-            - :orange[**Highest Increase By State**: states with highest population increase.
             ''')     
     
     
+
+
+
